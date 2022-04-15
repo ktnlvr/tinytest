@@ -10,6 +10,8 @@
 
 typedef void (*tinytest_test_f)(void);
 
+static const char separator[] = "-------------------------\n";
+
 typedef struct tinytest_test {
   const char *test_name;
   tinytest_test_f test_f;
@@ -34,6 +36,8 @@ int main(int argc, char **argv) {
       // Symbol table located
       break;
   }
+
+  printf(separator);
 
   Elf_Data *data;
   data = elf_getdata(section, NULL);
@@ -66,6 +70,8 @@ int main(int argc, char **argv) {
   printf("Gathered %d tests:\n", test_counter);
   for (int i = 0; i < test_counter; i++)
     printf("%.3d: %s\n", i + 1, tests[i].test_name);
+
+  printf(separator);
 
   elf_end(elf);
   close(fd);
