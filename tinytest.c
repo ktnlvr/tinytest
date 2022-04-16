@@ -3,6 +3,8 @@
 #include <gelf.h>
 #include <libelf.h>
 #include <memory.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -12,6 +14,9 @@
 typedef void (*tinytest_test_f)(void);
 
 static const char separator[] = "-------------------------\n";
+
+jmp_buf test_jumpback_buffer;
+void test_signal_handler(int signum) { longjmp(test_jumpback_buffer, 1); }
 
 typedef struct tinytest_test {
   const char *test_name;
@@ -93,12 +98,25 @@ int main(int argc, char **argv) {
 
   printf(separator);
 
+  int signals[4] = {SIGILL, SIGTRAP, SIGABRT, SIGFPE};
+  for (int i = 0; i < sizeof signals / sizeof(int); i++) {
+    // TODO: replace this with sigaction
+    signal(signals[i], test_signal_handler);
+  }
+
   printf("Executing....\n");
   for (int i = 0; i < test_counter; i++) {
-    printf("%.3d: began executing %s\n", i + 1, tests[i].test_name);
-    tests[i].test_f();
-    printf("     %s passed...\n", tests[i].test_name);
+    // TODO: add colours to this output
+    if (setjmp(test_jumpback_buffer) == 0) {
+      printf("%.3d: began executing %s\n", i + 1, tests[i].test_name);
+      tests[i].test_f();
+      printf("     %s passed...\n", tests[i].test_name);
+    } else {
+      printf("     %s failed...\n", tests[i].test_name);
+    }
   }
+
+  // TODO: add test counting
 
   elf_end(elf);
   close(fd);
