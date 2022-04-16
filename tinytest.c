@@ -11,6 +11,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef TINYTEST_CNF__NO_COLOR
+#define ANSI_COLOR_RED "\x1b[31m"
+#define ANSI_COLOR_GREEN "\x1b[32m"
+#define ANSI_COLOR_RESET "\x1b[0m"
+#else
+#define ANSI_COLOR_RED ""
+#define ANSI_COLOR_GREEN ""
+#define ANSI_COLOR_RESET ""
+#endif
 typedef void (*tinytest_test_f)(void);
 
 static const char separator[] = "-------------------------\n";
@@ -105,18 +114,30 @@ int main(int argc, char **argv) {
   }
 
   printf("Executing....\n");
+
+  int tests_total = 0;
+  int tests_passed = 0;
   for (int i = 0; i < test_counter; i++) {
-    // TODO: add colours to this output
+    tests_total++;
     if (setjmp(test_jumpback_buffer) == 0) {
       printf("%.3d: began executing %s\n", i + 1, tests[i].test_name);
       tests[i].test_f();
-      printf("     %s passed...\n", tests[i].test_name);
+      printf("     %s " ANSI_COLOR_GREEN "passed" ANSI_COLOR_RESET "...\n",
+             tests[i].test_name);
+      tests_passed++;
     } else {
-      printf("     %s failed...\n", tests[i].test_name);
+      printf("     %s " ANSI_COLOR_RED "failed" ANSI_COLOR_RESET "...\n",
+             tests[i].test_name);
     }
   }
 
-  // TODO: add test counting
+  printf("Result: ");
+  if (tests_passed == tests_total)
+    printf(ANSI_COLOR_GREEN);
+  else
+    printf(ANSI_COLOR_RED);
+  printf("%d/%d", tests_passed, tests_total);
+  printf(ANSI_COLOR_RESET "\n");
 
   elf_end(elf);
   close(fd);
