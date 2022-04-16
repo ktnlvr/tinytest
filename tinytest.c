@@ -22,8 +22,6 @@
 #endif
 typedef void (*tinytest_test_f)(void);
 
-static const char separator[] = "-------------------------\n";
-
 jmp_buf test_jumpback_buffer;
 void test_signal_handler(int signum) { longjmp(test_jumpback_buffer, signum); }
 
@@ -52,8 +50,6 @@ int main(int argc, char **argv) {
       // Symbol table located
       break;
   }
-
-  printf(separator);
 
   Elf_Data *data;
   data = elf_getdata(section, NULL);
@@ -89,31 +85,20 @@ int main(int argc, char **argv) {
       }
   }
 
-  printf("Gathered %d tests:\n", test_counter);
-  for (int i = 0; i < test_counter; i++)
-    printf("%.3d: %s\n", i + 1, tests[i].test_name);
-
-  printf(separator);
-
   if (test_counter == 0)
     return 0;
 
-  printf("Loading...\n");
   void *dl = dlopen(argv[1], RTLD_NOW | RTLD_GLOBAL);
   // TODO: do error handling on this one
 
   for (int i = 0; i < test_counter; i++)
     tests[i].test_f = (tinytest_test_f)dlsym(dl, tests[i].func_name);
 
-  printf(separator);
-
   int signals[4] = {SIGILL, SIGTRAP, SIGABRT, SIGFPE};
   for (int i = 0; i < sizeof signals / sizeof(int); i++) {
     // TODO: replace this with sigaction
     signal(signals[i], test_signal_handler);
   }
-
-  printf("Executing....\n");
 
   int tests_total = 0;
   int tests_passed = 0;
@@ -146,7 +131,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  printf("Result: ");
+  printf("Results: ");
   if (tests_passed == tests_total)
     printf(ANSI_COLOR_GREEN);
   else
