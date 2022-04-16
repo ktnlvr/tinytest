@@ -1,3 +1,4 @@
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <gelf.h>
 #include <libelf.h>
@@ -14,6 +15,7 @@ static const char separator[] = "-------------------------\n";
 
 typedef struct tinytest_test {
   const char *test_name;
+  const char *func_name;
   tinytest_test_f test_f;
 } tinytest_test;
 
@@ -60,10 +62,16 @@ int main(int argc, char **argv) {
         }
 
         int test_name_len = strlen(funcname + prefix_len) - 2;
-        char *chars = (char *)malloc(sizeof(char) * test_name_len);
-        strncpy(chars, funcname + prefix_len, test_name_len);
-        tests[test_counter].test_name = chars;
-        tests[test_counter++].test_f = (tinytest_test_f)symbol.st_value;
+
+        char *test_name = (char *)malloc(sizeof(char) * test_name_len);
+        strncpy(test_name, funcname + prefix_len, test_name_len);
+        tests[test_counter].test_name = test_name;
+
+        char *func_name = (char *)malloc(sizeof(char) * strlen(funcname));
+        strcpy(func_name, funcname);
+        tests[test_counter].func_name = func_name;
+
+        ++test_counter;
       }
   }
 
@@ -72,6 +80,25 @@ int main(int argc, char **argv) {
     printf("%.3d: %s\n", i + 1, tests[i].test_name);
 
   printf(separator);
+
+  if (test_counter == 0)
+    return 0;
+
+  printf("Loading...\n");
+  void *dl = dlopen(argv[1], RTLD_NOW | RTLD_GLOBAL);
+  // TODO: do error handling on this one
+
+  for (int i = 0; i < test_counter; i++)
+    tests[i].test_f = (tinytest_test_f)dlsym(dl, tests[i].func_name);
+
+  printf(separator);
+
+  printf("Executing....\n");
+  for (int i = 0; i < test_counter; i++) {
+    printf("%.3d: began executing %s\n", i + 1, tests[i].test_name);
+    tests[i].test_f();
+    printf("     %s passed...\n", tests[i].test_name);
+  }
 
   elf_end(elf);
   close(fd);
