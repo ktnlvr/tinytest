@@ -25,7 +25,7 @@ typedef void (*tinytest_test_f)(void);
 static const char separator[] = "-------------------------\n";
 
 jmp_buf test_jumpback_buffer;
-void test_signal_handler(int signum) { longjmp(test_jumpback_buffer, 1); }
+void test_signal_handler(int signum) { longjmp(test_jumpback_buffer, signum); }
 
 typedef struct tinytest_test {
   const char *test_name;
@@ -119,13 +119,28 @@ int main(int argc, char **argv) {
   int tests_passed = 0;
   for (int i = 0; i < test_counter; i++) {
     tests_total++;
-    if (setjmp(test_jumpback_buffer) == 0) {
+    int signal_recved = 0;
+    if ((signal_recved = setjmp(test_jumpback_buffer)) == 0) {
       printf("%.3d: began executing %s\n", i + 1, tests[i].test_name);
       tests[i].test_f();
       printf("     %s " ANSI_COLOR_GREEN "passed" ANSI_COLOR_RESET "...\n",
              tests[i].test_name);
       tests_passed++;
     } else {
+      switch (signal_recved) {
+      case SIGILL:
+        printf("     caught illegal instruction\n");
+        break;
+      case SIGTRAP:
+        printf("     assertion or breakpoint raised\n");
+        break;
+      case SIGABRT:
+        printf("     abort signal was triggered\n");
+        break;
+      case SIGFPE:
+        printf("     division by zero\n");
+        break;
+      }
       printf("     %s " ANSI_COLOR_RED "failed" ANSI_COLOR_RESET "...\n",
              tests[i].test_name);
     }
