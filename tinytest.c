@@ -40,6 +40,9 @@ int main(int argc, char **argv) {
   elf_version(EV_CURRENT);
 
   int fd = open(argv[1], O_RDONLY);
+  if (!fd)
+    exit(66);
+
   Elf *elf = elf_begin(fd, ELF_C_READ, NULL);
   Elf_Scn *section = NULL;
   GElf_Shdr shdr;
@@ -53,6 +56,8 @@ int main(int argc, char **argv) {
 
   Elf_Data *data;
   data = elf_getdata(section, NULL);
+  if (data == NULL)
+    exit(65);
   int count = shdr.sh_size / shdr.sh_entsize;
 
   int ii;
@@ -89,7 +94,8 @@ int main(int argc, char **argv) {
     return 0;
 
   void *dl = dlopen(argv[1], RTLD_NOW | RTLD_GLOBAL);
-  // TODO: do error handling on this one
+  if (!dl)
+    exit(66);
 
   for (int i = 0; i < test_counter; i++)
     tests[i].test_f = (tinytest_test_f)dlsym(dl, tests[i].func_name);
