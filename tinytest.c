@@ -133,12 +133,21 @@ int main(int argc, char **argv) {
     }
   }
 
+  float passing_rate = (float)(tests_passed) / (float)(tests_total);
   printf("Results: ");
   if (tests_passed == tests_total)
     printf(ANSI_COLOR_GREEN);
   else
     printf(ANSI_COLOR_RED);
   printf("%d/%d", tests_passed, tests_total);
+  printf(ANSI_COLOR_RESET);
+
+  printf(". Passing rate: ");
+  if (tests_passed == tests_total)
+    printf(ANSI_COLOR_GREEN);
+  else
+    printf(ANSI_COLOR_RED);
+  printf("%.3f", passing_rate);
   printf(ANSI_COLOR_RESET "\n");
 
   elf_end(elf);
