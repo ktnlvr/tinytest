@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   for (int i = 0; i < test_counter; i++)
     tests[i].test_f = (tinytest_test_f)dlsym(dl, tests[i].func_name);
 
-  int signals[4] = {SIGILL, SIGTRAP, SIGABRT, SIGFPE};
+  int signals[5] = {SIGILL, SIGTRAP, SIGABRT, SIGFPE, SIGSEGV};
   for (int i = 0; i < sizeof signals / sizeof(int); i++) {
     // TODO: replace this with sigaction
     signal(signals[i], test_signal_handler);
@@ -125,6 +125,8 @@ int main(int argc, char **argv) {
       case SIGFPE:
         printf("     division by zero\n");
         break;
+      case SIGSEGV:
+        printf("     segmentation violation\n");
       }
       printf("     %s " ANSI_COLOR_RED "failed" ANSI_COLOR_RESET "...\n",
              tests[i].test_name);
