@@ -12,10 +12,12 @@
 #include <unistd.h>
 
 #ifndef TINYTEST_CNF__NO_COLOR
+#define ANSI_STYLE_BOLD "\033[1m"
 #define ANSI_COLOR_RED "\x1b[31m"
 #define ANSI_COLOR_GREEN "\x1b[32m"
 #define ANSI_COLOR_RESET "\x1b[0m"
 #else
+#define ANSI_STYLE_BOLD ""
 #define ANSI_COLOR_RED ""
 #define ANSI_COLOR_GREEN ""
 #define ANSI_COLOR_RESET ""
@@ -140,7 +142,7 @@ int main(int argc, char **argv) {
   }
 
   float passing_rate = (float)(tests_passed) / (float)(tests_total);
-  printf("Results: ");
+  printf("Results: " ANSI_STYLE_BOLD);
   if (tests_passed == tests_total)
     printf(ANSI_COLOR_GREEN);
   else
@@ -148,7 +150,7 @@ int main(int argc, char **argv) {
   printf("%d/%d", tests_passed, tests_total);
   printf(ANSI_COLOR_RESET);
 
-  printf(". Passing rate: ");
+  printf(". Passing rate: " ANSI_STYLE_BOLD);
   if (tests_passed == tests_total)
     printf(ANSI_COLOR_GREEN);
   else
