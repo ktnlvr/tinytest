@@ -1,1 +1,1 @@
-#define TINYTEST_TEST(name) extern void tinytest_test__ ##name##__ (void)
+#define TINYTEST_TEST(name) void tinytest_test__ ##name##__ (void)
